@@ -1,0 +1,39 @@
+---
+author: "Peter Reithofer"
+title: "Virtual Substitution"
+date: "2022-01-19"
+---
+
+\newcommand{\phi}{\varphi}
+
+# At a Glance
+* eager SMT solver, i.e. also solves boolean structure
+* generates SAT-equivalent formula *without variables*
+* uses solution formulas for univariate case that exist for up to deg 4.
+  In this lecture only up to deg 2 (i.e. p-q-Formel).
+* can be extended to $\forall$-quantifier
+* generated formula's size increases exponentially with number of quantifiers
+
+
+
+* interpret multivariat as univariat over poly-ring
+* generates finite abstraction
+
+# An intuition about virtual substitution
+**Recap**: With $\phi[t / x]$ we denote the explicit substitution.
+By this we mean that we *syntactically* replace every occurence of
+$x$ in $\phi$ by $t$.
+
+**Example**: $(x=1) [0 / x] \rightsquigarrow (0=1)$
+
+**Def**: With $\phi[t // x]$ we denote the virtual substitution.
+By this we mean that we *semantically* replace every occurence of
+$x$ in $\phi$ by $t$.
+We do this if we cannot explicitly substitute $x$ with $t$ because
+$t$ is not a valid term in our current theory (e.g. contains square-roots).
+ by constructing a formula $\phi'$ such that
+$\phi' \equiv \phi[t / x]$.
+
+# Find symbolic candidates and their side conditions
+
+# Substituting

@@ -1,0 +1,82 @@
+---
+author: Peter Reithofer
+title: Subtropical
+date: "2022-01-19"
+---
+
+\newcommand{\nxs}{x_1,...,x_n}
+\newcommand{\N}{\mathbb{N}}
+
+# At a glance
+* incomplete
+* in practice very fast
+* theory solver, i.e. does not solve boolean sceleton, only conjunction of constraints.
+  In this lecture: only one constraint!
+* used for SAT checking on quantifier free fragment of $FO$ on $(R, +, \cdot)$ 
+  also called *quantifier free non-linear real arithmatic* (QFNRA).
+
+# Algebra concepts
+* **Monomial**: product of variables
+* **Term**: product of a coefficient and a monomial
+* **Polynomial** (in normal form): sum of *pairwise different* terms
+* **Frame**: $p: D[\nxs] \rightarrow \N^n$ 
+  maps a poly to set of exponent vectors. Example:
+  * $f := x^1y^1 + x + 1$ 
+  * $p(f) = \{ (1,1), (1, 0), (0, 0) \}$
+* **Newton Polytope**: inclusion minimal convex hull of frame of poly
+* **Hyperplane**: can be defined by linear equation
+
+# Notation
+* **polynomial ring**: $D[\nxs]$ is the ring of all polynomials with variables
+  $\nxs$ over domain $D$.
+* **vector**: we will use $\vec{x}$ for $\nxs$
+
+# Algo
+**Problem**: given $p \in D[\nxs]$ find $\nxs$ such that $p(\nxs) = 0$.
+
+**Outline**:
+
+1. find $\vec{a}$ such that $p(\vec{a}) < 0$.
+2. find $\vec{b}$ such that $p(\vec{b}) > 0$.
+3. use $\vec{a}$ and $\vec{b}$ to find $\vec{x}$ such that $p(\vec{x}) = 0$.
+
+## Part 1 (trivial)
+We set $\vec{a} = (1,...,1)$. 
+
+**Case**:
+
+* If by chance $p(\vec{a}) = 0$ we can immediately return.
+* If $p(\vec{a}) < 0$ then $\vec{a}$ satisfies our conditions.
+* If $p(\vec{a}) > 0$ we solve the equivalent problem $-1 \cdot p = 0$
+
+## Part 2
+For this part we hope that the polynome diverges in any direction to $+\infty$.
+If it does we walk into this direction until we find $\vec{b}$.
+
+### Case: Univariate
+Just check leading coefficient to find out if poly diverges towards $\pm \infty$.
+
+### Case: Multivariate
+Search for term with positive coeff that can get dominating.
+Search for direction in which this term gets dominating.
+
+**Algorithm**:
+Find Hyperplane that separates node of Newton Polytope with positive
+leading coefficient from the rest of the polytope.
+Normalvector of Hyperplane is direction in which the poly diverges.
+Use linear programming to find such hyperplane.
+
+## Part 3
+**Problem**: given $\vec{a}$ and $\vec{b}$ such that
+$p(\vec{a}) < 0$ and $p(\vec{b}) > 0$ find
+$\vec{x}$ such that $p(\vec{x}) = 0$.
+
+**Idea**: because $p$ is continuous we know that $p$ has a root between
+$\vec{a}$ and $\vec{b}$.
+
+* We parameterize the segment between $\vec{a}, \vec{b}$:
+  $$ s(t) := \vec{a} + t \cdot (\vec{b} - \vec{a}) $$
+  And know by "Zwischenwertsatz" that $p(s(t)) = 0$ for some $t \in (0, 1)$.
+
+* Because $p \circ s$ is univariate we can find such a $t$ with common techniques (e.g. bisection)
+* Root of $p$ is then given by $s(t)$.

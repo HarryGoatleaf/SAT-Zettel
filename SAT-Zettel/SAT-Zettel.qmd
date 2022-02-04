@@ -1,0 +1,223 @@
+---
+author: "Peter Reithofer"
+title: "SAT-Zettel"
+date: "2022-01-19"
+format:
+  html:
+    theme:
+      light: flatly
+      dark: darkly
+    toc: true
+    toc-depth: 5
+    number-sections: true
+    self-contained: true
+---
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\phi}{\varphi}
+
+## SAT
+
+### Propositional Logic
+
+::: {#def-propositional-logic}
+#### Propositional Logic
+Let $AP$ be a set of Boolean variables (atomic propositions)
+then a grammar for all **propositional logic formulae** (PropForm)
+is:
+
+$$\phi := a | (\neg \phi) | (\phi \land \phi) \text{, for } a \in AP$$
+
+Some terminology:
+
+* **Literal**: Either variable or negation of variable.
+* **Term**: Conjunction of literals.
+* **Clause**: Disjunction of literals.
+:::
+
+::: {#def-assignment}
+#### Assignment
+An **assignment** is an interpretation that assigns a truth value to all
+variables in AP. We call the set of all assignments Assign
+We can see an assignment $\alpha$ as a:
+
+* mapping $\alpha: AP \rightarrow \{0, 1\}$
+* set of all true variables $\alpha \in \mathfrak{P}(AP)$
+* encoding as a bitstring $\alpha \in \{0, 1\}^{AP}$
+:::
+
+::: {#def-sat}
+#### Satisfaction
+We can inductively define the truth value of a formula and write
+$\alpha \models \phi$ iff the truth value of $\phi$ is $1$ under 
+the assignment $\alpha$.
+
+$sat$ maps each formula to the set of assignments that satisfy it:
+$$ sat : PropForm \rightarrow \mathfrak{P}(Assign), 
+\phi \mapsto \{\alpha \in Assign | \alpha \models \phi \}$$
+
+We can extend $\models$ to sets of assignments and other formulas.
+For $T \subseteq Assign$ we say that
+$$T \models \phi \text{ iff. } T \subseteq sat(\phi)$$
+and 
+$$\phi_1 \models \phi_2 \text{ iff. } sat(\phi_1) \subseteq sat(\phi_2)$$
+:::
+
+A formula $\phi$ is:
+
+* **valid** iff $sat(\phi) = Assign$
+* **satisfiable** iff $sat(\phi) \neq \emptyset$
+* **unsatisfiable** iff $sat(\phi) = \emptyset$
+  
+  
+#### Normalforms
+
+::: {#def-nnf}
+##### Negation Normal Form (NNF)
+\
+
+* contains only $\neg, \land, \lor$
+* only variables are negated
+* conversion to NNF can be done by pushing negations to atoms with DeMorgan 
+  and can be achieved in linear time
+:::
+
+::: {#def-dnf}
+##### Disjunctive Normal Form (DNF)
+\
+
+* disjunction of terms
+* Sat problem is linear
+* Unsat problem is NP-complete
+* conversion to DNF is NP-complete
+:::
+
+::: {#def-cnf}
+##### Conjunctive Normal Form (CNF) 
+\
+
+* conjunction of clauses
+* Sat problem is NP-complete
+* Unsat problem is linear
+* conversion to CNF is NP-complete
+:::
+
+#### Tseitin's encoding
+'Conversion' to CNF.
+Not logically equivalent but sat equivalent.
+
+**Procedure**:
+
+* Add auxiliary variables $h_1,...,h_n$ for each subformula.
+* Encode semantic of aux vars in clauses
+* Enforce validity of $h_1$ in one clause
+
+### Proof System
+
+::: {#def-proof-system}
+#### Proof System
+Consists of a set of *axioms* and *inference rules* of the form
+$\frac{\text{Antecedents}}{\text{Consequents}}$.
+
+For a proof system $\mathcal{H}$ we define the provability relation $\vdash_\mathcal{H}$.
+$\Gamma \vdash_\mathcal{H} \phi$ holds iff. we can proove $\phi$ in $\mathcal{H}$ with premises
+from $\Gamma$.
+
+Proof systems can be:
+
+* **Sound**: all derivable sentences are "true" \
+  if $\vdash_\mathcal{H} \phi$ then $\models \phi$
+* **Complete**: all "true" sentences are derivable \
+  if $\models \phi$ then $\vdash_\mathcal{H} \phi$
+:::
+
+::: {#def-resolution}
+#### Resolution
+The resolution inference rule:
+
+$$\frac{(I \lor A) \ (\neg I \lor B)}{(A \lor B)}$$
+
+*Sound and complete* proof system for *CNF*.
+If the input formula is unsatisfiable there exists a proof of the empty clause.
+:::
+
+### SAT solving
+From now on we assume a formula in CNF.
+
+#### Enumeration
+Idea
+: Go through all (partial)-assignments and check whether they satisfy the formula.
+
+**Algorithm**:
+
+* while variables are unassigned:
+  * Assign value to unassigned variable
+  * if current partial assignment satisfies formula: return Sat
+  * if current partial assignment unsatisfies formula: revert decision (backtrack)
+
+**Properties**:
+
+* if unsat, all assignments need to be ckecked (slow)
+* if sat, variable and sign ordering strongly influences runtime.
+
+#### Boolean constraint propagation
+
+For a partial assignment we define the status of a clause:
+
+* **satisfied**: at least one literal is satisfied
+* **unsatisfied**: all literals are assigned but clause isn't satisfied
+* **unit**: all but one literal are assigned but clause isn't satisfied
+* **unresolved**: else
+
+Decision Level (DL)
+: Counts the number of decisions (without propagations).
+
+Antecedent (I)
+: Unit clause implying the value of literal I (nil if decision).
+
+Algorithm:
+
+* while variables are unassigned:
+  * Assign value to unassigned variable
+  * while there are unit clauses:
+    * set unasigned var in clause to true
+  * if current partial assignment satisfies formula: return Sat
+  * if current partial assignment unsatisfies formula: revert decision (backtrack)
+    
+##### Watched literals
+Book-keeping to quickly find unit clauses.
+
+For each clause we **watch** two different literals such that
+
+* either one is true
+* or both are unassigned
+  
+If we now assign a value to a literal $I$ we refresh the watched literals in
+all clauses where we watch $I$. If we can't find new watch candidates we
+know the clause is unit.
+This way we only need to look at the clauses where we watch $I$ and not all clauses.
+
+##### Implication Graph
+*Directed graph* that represents *propagations* that lead to a (partial) variable assignment.
+
+* Nodes: all assigned variables and (if present) conflict node $\kappa$ \
+  We label variable $x$ with: $x$ = value($x$)@decisionlevel($x$)
+* Edges:
+  * (from false literals, to true literal) for each ex-unit clause \
+    Which we label with the ex-unit clause
+  * (from false literals, to $\kappa$) \
+    Which we label with conflicting clause
+    
+Defs:
+
+* **unique implication point** (UIP): node $v \neq \kappa$ such that all paths from last decision to
+  $\kappa$ go through $n$.
+* **first UIP**: the UIP closest to $\kappa$
+* **asserting clause**: conflict clause with a single literal from current decision level
+
+## SMT
+
+## Linear Arithmatik
+
+## Non-Linear Arithmatik
