@@ -202,6 +202,8 @@ know the clause is unit.
 This way we only need to look at the clauses where we watch $I$ and not all clauses.
 :::
 
+#### Conflict resolution
+
 ::: {#def-implication-graph}
 ##### Implication Graph
 *Directed graph* that represents *propagations* that lead to a (partial) variable assignment.
@@ -213,6 +215,16 @@ This way we only need to look at the clauses where we watch $I$ and not all clau
     Which we label with the ex-unit clause
   * (from false literals, to $\kappa$) \
     Which we label with conflicting clause
+:::
+
+::: {#def-conflict-clause}
+##### Conflict clauses
+Let $L$ be a set of literals that form a cut in an implication graph.
+Then $\bigvee_{I \in L} \neg I$ is a **conflict clause**.
+
+* is false under the current (partial)-assignment
+* its satisfaction is *necessary* for the satisfaction of the formula
+* there can be multiple conflict clauses.
 
 Defs:
 
@@ -222,16 +234,31 @@ Defs:
 * **asserting clause**: conflict clause with a single literal from current decision level
 :::
 
+::: {.callout-warning}
+Not to be confused with *conflicting clauses*. These are the clauses in the *input formula*
+that are false under the current assignment.
+:::
+
+
 ## SMT
 
 ### First Order Logic
-Definition: <!-- TODO: defi -->
 
+::: {#def-first-order-theory}
+#### First Order Logic
+test
+
+test
+:::
+
+::: {#def-theory}
 #### Theory
 Let $\Sigma$ be a signature. Then a theory $T$ is defined by a set of
 $\Sigma$-sentences.
+
 We will often define theories as the smallest set that is closed under
-a inference from a sound inference system and includes a set of *axioms*
+a inference from a sound inference system and includes a set of *axioms*.
+:::
 
 :::{.callout-important}
 #### Difference to MaLo definition
@@ -246,8 +273,12 @@ Let $\phi$ be a $\Sigma$-formula, then $\phi$ is:
   that satisfies $T$ and $\phi$.
 * *T-valid* iff. all structures that satisfy T also satisfy $\phi$
 
+::: {#def-fragment}
 #### Fragments
 Restrict the grammar of FO.
+
+\
+:::
 
 :::{#exm-fo-fragments}
 \ 
@@ -262,7 +293,13 @@ Restrict the grammar of FO.
 General Idea
 : transform FO-formula to sat-equivalent propositional formula and apply with SAT-solving.
 
-#### Equality Logic with Uninterpreted Functions
+
+### Lazy SMT solving
+General Idea: find solutions for *boolean skeleton* of formulas and use *theory solver* to check
+satisfiability of conjunction of predicates.
+
+
+## Equality Logic with Uninterpreted Functions
 Problem:
 Given a quantifier free FO formula over some functional signature $\phi$ in NNF,
 can we find a structure $\mathfrak{A}$ and values for the variables $\alpha$ such that
@@ -271,7 +308,7 @@ $$ \mathfrak{A}, \alpha \models \phi$$
 <!-- TODO: sehr freie def. vllt bezug zum VL formalismus herstellen -->
 <!-- TODO: evtl motivation -->
 
-##### Ackermann's reduction
+### Ackermann's reduction
 Transforms formula to an equisatisfiable formula without uninterpreted functions.
 
 **Algorithm**:
@@ -289,10 +326,10 @@ Transforms formula to an equisatisfiable formula without uninterpreted functions
 * $\phi_{cong} \land \phi_{flat}$ is satisfiability equivalent to $\phi$
 * $\phi_{cong} \leftarrow \phi_{flat}$ is UNSAT iff. $\phi$ is valid
 
-##### Eager SMT for equalities
+### Eager SMT for equalities
 
 ::: {#def-equality-graph}
-###### Equality Graphs
+#### Equality Graphs
 Let $\phi$ be a quantifier-free FO formula (with equalities) in NNF.
 Then it's polar E-Graph is $(V, E_=, E_\neq)$, where
 
@@ -313,7 +350,7 @@ two variables that are in the same connected component are all equal.
 -->
 
 ::: {#def-contradictory-cycle}
-###### Contradictory Cycle
+#### Contradictory Cycle
 A cycle is
 
 * *contradictory* iff. it contains exactly one edge from $E_\neq$
@@ -329,13 +366,13 @@ the $\neq$ constraint false.
 :::
 
 
-###### Preprocessing
+#### Preprocessing
 We first simplify the formula.
 We know that we can trivially satisfy all constraints that
 do not lie on a contradictory cycle because the domain is significantly large.
 Thus we replace these constraints with true and simplify the formula.
 
-###### The Sparse Method based on polar E-Graphs
+#### The Sparse Method based on polar E-Graphs
 
 Idea
 : Require that for ever circle in the E-Graph, transitivity is ensured.
@@ -384,7 +421,7 @@ we assume that $\phi$ is in NNF we will only make the formula
 There can potentially be an **exponential** number of simple contradictory cycles!
 :::
 
-###### Chordal Method based on non-polar E-Graphs
+#### Chordal Method based on non-polar E-Graphs
 Idea
 : Add edges until the graph is composed only of (polynomially many) triangles.
   Then it suffices to require transitivity of every triangle.
@@ -415,23 +452,23 @@ How to make a graph cordal
 **Result**:
 Satisfiability equivalent formula of $\phi$ is $\phi_{sk} \land \phi_{trans}$
 
-#### Bitvector Arithmetic
-
-##### bit-blasting
+### Bitvector Arithmetic (Bit-Blasting)
 
 * Build propositional flattening
 * Add Boolean variable for each bit of each sub-expression
 * Add constraints for each sub-expression
 
-### Lazy SMT solving
-General Idea: find solutions for *boolean skeleton* of formulas and use *theory solver* to check
-satisfiability of conjunction of predicates.
-
 ## Linear Arithmatik
+
+## Fourier Motzkin
+
+## Simplex
+
+## Branch and Bound
 
 ## Non-Linear Arithmatik
 
-### Decomposition
+## Decomposition
 Idea
 : Concept to decompose infinite variable domain into finitely many,
   truth-invariant intervals.
@@ -445,21 +482,21 @@ Algebra definitions:
 * **Finite abstraction**: finite set of points that contains one point from each sign invariant
     region from $p$
 
-#### Algebra facts
+### Algebra facts
 * Every *univariate* poly $p$ of degree $d$ has exactly $d$ complex roots and thus at most
   $d$ real roots.
 * Sign of $p$ is invariant between two successive roots.
 * We can partition $\mathbb{R}$ into at most $2d + 1$ *sign invariant* regions for $p$.
 
-#### Invariant regions of single poly
-#### Invariant regions of multiple polys
-#### Application
+### Invariant regions of single poly
+### Invariant regions of multiple polys
+### Application
 Given a *finite abstraction* of a poly we can easily check if it can satisfy a constraint
 by pluging in all *sample points* from the abstraction and evaluating the formula.
 
 
-### Subtropical Satisfiability Method
-#### At a glance
+## Subtropical Satisfiability Method
+### At a glance
 * incomplete
 * in practice very fast
 * theory solver, i.e. does not solve boolean sceleton, only conjunction of constraints.
@@ -467,7 +504,7 @@ by pluging in all *sample points* from the abstraction and evaluating the formul
 * used for SAT checking on quantifier free fragment of $FO$ on $(R, +, \cdot)$ 
   also called *quantifier free non-linear real arithmatic* (QFNRA).
 
-#### Algebra concepts
+### Algebra concepts
 * **Monomial**: product of variables
 * **Term**: product of a coefficient and a monomial
 * **Polynomial** (in normal form): sum of *pairwise different* terms
@@ -478,12 +515,12 @@ by pluging in all *sample points* from the abstraction and evaluating the formul
 * **Newton Polytope**: inclusion minimal convex hull of frame of poly
 * **Hyperplane**: can be defined by linear equation
 
-#### Notation
+### Notation
 * **polynomial ring**: $D[\nxs]$ is the ring of all polynomials with variables
   $\nxs$ over domain $D$.
 * **vector**: we will use $\vec{x}$ for $\nxs$
 
-#### Algo
+### Algo
 **Problem**: given $p \in D[\nxs]$ find $\nxs$ such that $p(\nxs) = 0$.
 
 **Outline**:
@@ -492,7 +529,7 @@ by pluging in all *sample points* from the abstraction and evaluating the formul
 2. find $\vec{b}$ such that $p(\vec{b}) > 0$.
 3. use $\vec{a}$ and $\vec{b}$ to find $\vec{x}$ such that $p(\vec{x}) = 0$.
 
-##### Part 1 (trivial)
+#### Part 1 (trivial)
 We set $\vec{a} = (1,...,1)$. 
 
 **Case**:
@@ -501,14 +538,14 @@ We set $\vec{a} = (1,...,1)$.
 * If $p(\vec{a}) < 0$ then $\vec{a}$ satisfies our conditions.
 * If $p(\vec{a}) > 0$ we solve the equivalent problem $-1 \cdot p = 0$
 
-##### Part 2
+#### Part 2
 For this part we hope that the polynome diverges in any direction to $+\infty$.
 If it does we walk into this direction until we find $\vec{b}$.
 
-###### Case: Univariate
+##### Case: Univariate
 Just check leading coefficient to find out if poly diverges towards $\pm \infty$.
 
-###### Case: Multivariate
+##### Case: Multivariate
 Search for term with positive coeff that can get dominating.
 Search for direction in which this term gets dominating.
 
@@ -518,7 +555,7 @@ leading coefficient from the rest of the polytope.
 Normalvector of Hyperplane is direction in which the poly diverges.
 Use linear programming to find such hyperplane.
 
-##### Part 3
+#### Part 3
 **Problem**: given $\vec{a}$ and $\vec{b}$ such that
 $p(\vec{a}) < 0$ and $p(\vec{b}) > 0$ find
 $\vec{x}$ such that $p(\vec{x}) = 0$.
@@ -534,15 +571,15 @@ $\vec{a}$ and $\vec{b}$.
 * Root of $p$ is then given by $s(t)$.
 
 
-### Cylindrical Algebraic decomposition
-#### At a glance
+## Cylindrical Algebraic decomposition
+### At a glance
 * complete (only complete procedure for QFNRA one in this lecture)
 * only handles set of constraints
 * generates finite set of samples that include all sign invariant regions
 * double exponential runtime
 
 
-#### Terminology
+### Terminology
 
 Region
 : non-empty connected subset of $\R^n$.
@@ -551,7 +588,7 @@ Decomposition
 : is finite partition where each cell (part of partition) is a region.
 
 ::: {#def-cad}
-##### Cylindrical Algebraic Decomposition
+#### Cylindrical Algebraic Decomposition
 A CAD is a decomposition that is:
 
 * (semi)-**algebraic**: if each cell can be constructed from poly varieties
@@ -566,7 +603,7 @@ CAD of poly is CAD whose cells are sign invariant.
 :::
 
 ::: {#def-real-algebraic-numbers}
-##### Real Algebraic Numbers
+#### Real Algebraic Numbers
 A number $a \in \R$ is called real algebraic iff.
 there exists poly $p \in \Q[x]$ such that $p(a) = 0$.
 
@@ -575,7 +612,7 @@ and $p$ has only on real root in $I$.
 :::
 
 ::: {#def-cauchy-bound}
-##### Cauchy Bound
+#### Cauchy Bound
 For $p \in \Q[x]$ with coefficients $a_1,...,a_k$ and leading coeff $l$,
 the *cauchy bound* 
 
@@ -583,16 +620,16 @@ $$C := 1 + \max{\frac{|a_i|}{l}}$$
 :::
 
 ::: {#lem-cauchy-bound}
-##### Cauchy Bound application
+#### Cauchy Bound application
 We know that all real roots of $p$ are in $[-C, C]$.
 
 \
 :::
 
-#### Sturm sequence
+### Sturm sequence
 
 ::: {#def-sturm-sequence}
-##### Sturm sequence
+#### Sturm sequence
 Let $p \in \Q[x]$ where the factorisation of $p$ has no repreating factors.
 Then the **sturm sequence** of $p$ is given by:
 
@@ -604,7 +641,7 @@ Then the **sturm sequence** of $p$ is given by:
 :::
 
 ::: {#lem-sturm-sequence-application}
-##### Sturm sequence application
+#### Sturm sequence application
 Let $p \in \Q[x]$ and $(p_0,...,p_k)$ it's sturm sequence.
 Further let $\sigma(x)$ be the number of sign changes in 
 $(p_0(x), p_1(x),..., p_k(x))$.
@@ -618,7 +655,7 @@ Then we know that the number of real roots of $p$ in $(a, b]$ is $\sigma(a) - \s
 In exam sturm sequence will be given!
 :::
 
-#### Case of $\R$
+### Case of $\R$
 
 **Algorithm**:
 
@@ -634,12 +671,12 @@ Evaluation of polys at algebraic numbers with our representation not handled in
 this lecture.
 :::
 
-#### Case of $\R^n$
+### Case of $\R^n$
 
 Harder because we have potentially infinite varieties.
 
 ::: {#def-delineable}
-##### Delineability
+#### Delineability
 A poly $p$ is *delineable* on a region $R \subseteq \R^{n-1}$ 
 iff.
 for each $\vec{a} \in R$ the number of:
@@ -651,7 +688,7 @@ for each $\vec{a} \in R$ the number of:
 is constant.
 :::
 
-##### Algo
+#### Algo
 * projection is black-box
 * projection gives set of polys with one variable less such that common zeros
   are cylinder boundaries of higher-dim polys.
@@ -663,7 +700,7 @@ is constant.
   * coefficients whose roots cover divergence points
   * (cover because they may have additional superflous roots)
   
-#### Generate infeasible subsets
+### Generate infeasible subsets
 
 * Collect the violated constraints for each sample point.
 * Calculate covering
