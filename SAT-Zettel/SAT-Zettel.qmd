@@ -202,36 +202,35 @@ know the clause is unit.
 This way we only need to look at the clauses where we watch $I$ and not all clauses.
 :::
 
-#### Conflict resolution
+#### Boolean Conflict Resolution
 
 ::: {#def-implication-graph}
 ##### Implication Graph
 *Directed graph* that represents *propagations* that lead to a (partial) variable assignment.
+Usefull to find causes of conflicts.
 
-* Nodes: all assigned variables and (if present) conflict node $\kappa$ \
-  We label variable $x$ with: $x$ = value($x$)@decisionlevel($x$)
+* Nodes: 
+  * assigned variables \
+    Which we label with: `x = value(x)@decisionlevel(x)`
+  * (if present) conflict node $\kappa$
 * Edges:
-  * (from false literals, to true literal) for each ex-unit clause \
-    Which we label with the ex-unit clause
-  * (from false literals, to $\kappa$) \
-    Which we label with conflicting clause
+  * (**from:** *false literals*, **to:** *true literal*) for each ex-unit clause. \
+    Which we label with the ex-unit clause.
+  * (**from:** *false literals*, **to:** $\kappa$) \
+    Which we label with conflicting clause.
 :::
 
 ::: {#def-conflict-clause}
 ##### Conflict clauses
-Let $L$ be a set of literals that form a cut in an implication graph.
+Let $L$ be a set of literals that form a cut in an implication graph,
+that separates roots (decision) from the conflict node.
+By "form a cut" we mean that $L$ includes all nodes whose outgoing edges are cut.
+
 Then $\bigvee_{I \in L} \neg I$ is a **conflict clause**.
 
 * is false under the current (partial)-assignment
 * its satisfaction is *necessary* for the satisfaction of the formula
 * there can be multiple conflict clauses.
-
-Defs:
-
-* **unique implication point** (UIP): node $v \neq \kappa$ such that all paths from last decision to
-  $\kappa$ go through $n$.
-* **first UIP**: the UIP closest to $\kappa$
-* **asserting clause**: conflict clause with a single literal from current decision level
 :::
 
 ::: {.callout-warning}
@@ -239,6 +238,129 @@ Not to be confused with *conflicting clauses*. These are the clauses in the *inp
 that are false under the current assignment.
 :::
 
+::: {#def-asserting-clause}
+##### Asserting Clause
+Asserting clauses are *conflict clauses* with a single literal from the current decision level.
+
+Some terminology:
+
+* **unique implication point** (UIP): node $v \neq \kappa$ such that all paths from last decision to
+  $\kappa$ go through $n$.
+* **first UIP**: the UIP closest to $\kappa$
+:::
+
+**Finding asserting clause with implication graph:** \
+Find the cut that is defined by the *first UIP* and root nodes.
+The *conflict clause* corresponding to this cut is asserting.
+
+**Finding assering clauses with resolution:** \
+
+* Start with *conflicting clause*.
+* Resolve current clause with antecedent of assigned literals in reverse order.
+* Stop when current clause is asserting.
+
+**Algo**: \
+After each conflict apply conflict resolution and add the asserting clause to the formula
+before backtracking.
+
+::: {.callout-note}
+At DL0 only those variables are assigned that appear in a clause with a single literal.
+If we have a conflict at DL0 we know that there is a variable that appears positive and
+negated in two clauses with only one literal.
+Thus we can resolve the empty clause.
+
+<!-- TODO: verify this -->
+If a formula is unsat our algo always finds a way to resolve the empty clause.
+:::
+
+#### Heuristics
+
+::: {#def-static-heuristic}
+#### Static decision heuristic
+
+Static variable order and constant sign.
+
+Always choose lowest variable in order and assign sign value first.
+:::
+
+::: {#exm-static-heuristic}
+\
+
+$x < y < z$ sign: try positive first.
+:::
+
+::: {#def-dlis}
+#### DLIS 
+
+The *Dynamic Largest Individual Sum* heuristic
+chooses literal that satisfies the most clauses.
+
+When making a decision calculate for each literal $l$:
+$$C_l := \text{number of unresolved clauses in which } l \text{ appears}$$
+and choose $l$ such that $C_l$ is maximal.
+:::
+
+::: {#exm-dlis}
+\
+
+$\phi = (x \lor y) \land (x \lor \neg z)$ and no assignments \
+$C_{x} = 2 \ \geq \ C_{y} = 1 \ \geq \ C_{\neg z} = 1 (\geq 0 = C_{\neg x} = C_{\neg y} = C_{z})$ \
+$\Rightarrow$ assign `true` to $x$.
+:::
+
+::: {#def-jeroslow-wang}
+#### Jeroslow-Wang method
+
+Prioritises literals that appear in shorter clauses.
+
+For each literal $l$ define:
+$$ J(l) := \Sigma_{\text{clause } c \text{ containing }l} 2^{-|c|} $$
+
+Always choose literal that maximizes $J(l)$.
+:::
+
+::: {#def-vsids}
+#### VSIDS 
+
+The *variable state independent decaying sum* heuristic
+prioritises variables that were recently involved in conflicts.
+
+State:
+
+* Counter for every variable
+* Increment value
+
+Heuristik:
+
+* when conflict occurs increment every variable that occured in a clause that was used for resolution
+* increase increment value
+* periodically divide all counters and increment value
+
+<!-- TODO: try first? -->
+:::
+
+#### Unsatisfiable core
+
+::: {#def-unsat-core}
+##### Unsat core
+
+The unsatisfiable core of an unsatisfiable CNF formula is an unsatisfiable subset
+of the original set of clauses.
+
+\
+:::
+
+::: {#def-resolution-graph}
+##### Resolution Graph
+
+For an **unsat** formula, the resolution graph is:
+
+* Nodes: all original, learned clauses and the empty clause
+* Edges: directed edge to every learned clauses from the clauses that resolved to it
+:::
+
+We can find an *inclusion minimal* unsat core from a resolution graph by taking
+every original clause from which we can reach the empty clause.
 
 ## SMT
 
@@ -281,7 +403,8 @@ Restrict the grammar of FO.
 :::
 
 :::{#exm-fo-fragments}
-\ 
+#### Example Fragments
+\
 
 * quantifier-free fragment
 * conjunctive fragment
@@ -542,10 +665,10 @@ We set $\vec{a} = (1,...,1)$.
 For this part we hope that the polynome diverges in any direction to $+\infty$.
 If it does we walk into this direction until we find $\vec{b}$.
 
-##### Case: Univariate
+**Case: Univariate**\
 Just check leading coefficient to find out if poly diverges towards $\pm \infty$.
 
-##### Case: Multivariate
+**Case: Multivariate**\
 Search for term with positive coeff that can get dominating.
 Search for direction in which this term gets dominating.
 

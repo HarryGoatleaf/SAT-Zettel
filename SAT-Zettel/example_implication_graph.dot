@@ -1,0 +1,7 @@
+digraph {
+  x -> y 
+  y -> k [style="dashed"]
+  x [shape="point" xlabel = "x=1@1"]
+  y [shape="point" xlabel = "y=1@1" color="blue"]
+  k [shape="point" xlabel = "k" color="blue"]
+}
