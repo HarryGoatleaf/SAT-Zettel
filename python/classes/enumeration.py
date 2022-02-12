@@ -1,5 +1,10 @@
 from z3 import *
 
+# whack hack
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# now import own classes
+import classes.cnf as cnf
+
 def enumeration(phi, try_first):
   """
   Applies the SAT-solving technique 'enumaration' to the boolean formula phi
@@ -15,12 +20,16 @@ def enumeration(phi, try_first):
   -------
   True iff. phi is satisfiable.
   """
+  # check if phi is in cnf
+  if not cnf.is_cnf(phi):
+    raise Exception("Formula is not in CNF.")
   # get free variables in formula
-  vars = list(get_vars(phi))
+  variables = [key.n for key in cnf.get_vars(phi)]
 
+  # clear trail
   # stack of entries (x,v,b) 
   # (x, v) encode current partial assignment
-  # b is flag if we tried other value for variable x
+  # b is flag indicating if we tried other value for variable x
   trail = []
   
   def decide():
@@ -36,9 +45,9 @@ def enumeration(phi, try_first):
     False
       iff. there are no more free variables
     """
-    if len(trail) >= len(vars):
+    if len(trail) >= len(variables):
       return False
-    cur_var = vars[len(trail)]
+    cur_var = variables[len(trail)]
     trail.append((cur_var, try_first, False))
     return True
   
@@ -53,7 +62,7 @@ def enumeration(phi, try_first):
     False
       iff. we explored all assignments
     """
-    while len(trail) >= 0:
+    while len(trail) > 0:
       (var, val, flag) = trail.pop()
       if not flag:
         # found unexplored subtree
@@ -64,4 +73,7 @@ def enumeration(phi, try_first):
   
   while(True):
     if not decide():
-      pass
+      if cnf.check_partial_assignment(phi, trail):
+        return True
+      elif not backtrack():
+        return False

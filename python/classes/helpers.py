@@ -1,33 +1,13 @@
 from z3 import *
 
-# get_vars
-# copy paste from 
-# https://stackoverflow.com/questions/14080398/z3py-how-to-get-the-list-of-variables-from-a-formula
+def is_bool_var(phi):
+  """
+  Is true iff phi is a boolean variable.
+  """
+  return is_bool(phi) and is_const(phi) and not is_bool_val(phi)
 
-## Wrapper for allowing Z3 ASTs to be stored into Python Hashtables. 
-class AstRefKey:
-    def __init__(self, n):
-        self.n = n
-    def __hash__(self):
-        return self.n.hash()
-    def __eq__(self, other):
-        return self.n.eq(other.n)
-    def __repr__(self):
-        return str(self.n)
-
-def askey(n):
-    assert isinstance(n, AstRef)
-    return AstRefKey(n)
-
-def get_vars(f):
-    r = set()
-    def collect(f):
-      if is_const(f): 
-          if f.decl().kind() == Z3_OP_UNINTERPRETED and not askey(f) in r:
-              r.add(askey(f))
-      else:
-          for c in f.children():
-              collect(c)
-    collect(f)
-    return r
-
+def is_bool_val(phi):
+  """
+  Is true iff phi is a constant boolean value, i.e. either true or false.
+  """
+  return is_true(phi) or is_false(phi)
