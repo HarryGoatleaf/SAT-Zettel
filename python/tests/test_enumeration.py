@@ -29,3 +29,7 @@ class Test(unittest.TestCase):
       # empty clause
       psi = And(Or())
       self.assertFalse(enumeration.enumeration(psi, False))
+      
+    def test_enumeration_with_smtlibv2(self):
+      phi = parse_smt2_string('(declare-const y Bool) (declare-const x Bool) (assert (and (or x y)))')[0]
+      self.assertTrue(enumeration.enumeration(phi, False))
