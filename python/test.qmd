@@ -1,8 +1,0 @@
-```{python}
-from ipycytoscape import CytoscapeWidget
-import networkx as nx
-G = nx.complete_graph(5)
-cyto = CytoscapeWidget()
-cyto.graph.add_graph_from_networkx(G)
-display(cyto)
-```
