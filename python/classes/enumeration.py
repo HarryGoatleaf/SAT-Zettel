@@ -6,17 +6,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import classes.cnf as cnf
 
 def enumeration(phi, sign):
-  # check if phi is in cnf
-  if not cnf.is_cnf(phi):
-    raise Exception("Formula is not in CNF.")
-  # get free variables in formula
-  variables = [key.n for key in cnf.get_vars(phi)]
-
-  # stack of entries (x,v,b) 
-  # (x, v) encode current partial assignment
-  # b is flag indicating if we tried other value for variable x
-  trail = []
-
   def decide():
     if len(trail) >= len(variables):
       return False
@@ -33,7 +22,17 @@ def enumeration(phi, sign):
         return True
     # explored all assignments
     return False
-  
+
+  # check if phi is in cnf
+  if not cnf.is_cnf(phi):
+    raise Exception("Formula is not in CNF.")
+  # get free variables in formula
+  variables = [key.n for key in cnf.get_vars(phi)]
+
+  # stack of entries (x,v,b) 
+  # (x, v) encode current partial assignment
+  # b is flag indicating if we tried other value for variable x
+  trail = []
   while(True):
     if not decide():
       if cnf.check_partial_assignment(phi, trail):
