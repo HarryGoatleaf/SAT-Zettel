@@ -39,7 +39,7 @@ Some terminology:
 ::: {#def-assignment}
 #### Assignment
 An **assignment** is an interpretation that assigns a truth value to all
-variables in AP. We call the set of all assignments Assign
+variables in AP. We call the set of all assignments Assign.
 We can see an assignment $\alpha$ as a:
 
 * mapping $\alpha: AP \rightarrow \{0, 1\}$
@@ -161,7 +161,8 @@ Idea
 * if unsat, all assignments need to be ckecked (slow)
 * if sat, variable and sign ordering strongly influences runtime.
 
-```{python}
+<!--
+```python
 #| echo: false
 from z3 import *
 # whack hack
@@ -175,8 +176,9 @@ if not os.path.isdir(pythondir):
 # now import own classes
 import classes.cnf as cnf
 ```
+-->
 
-```{python}
+```python
 def enumeration(phi, sign):
   # check if phi is in cnf
   if not cnf.is_cnf(phi):
@@ -416,12 +418,14 @@ every original clause from which we can reach the empty clause.
 
 ### First Order Logic
 
+<!--
 ::: {#def-first-order-theory}
 #### First Order Logic
 test
 
 test
-:::
+::: 
+-->
 
 ::: {#def-theory}
 #### Theory
@@ -462,15 +466,22 @@ Restrict the grammar of FO.
 * equality logic (no functions and predicates)
 :::
 
-### Eager SMT solving
-General Idea
+Eager SMT Solving
 : transform FO-formula to sat-equivalent propositional formula and apply with SAT-solving.
 
+Full Lazy SMT Solving
+: find solutions for *boolean skeleton* of formulas and use *theory solver* to check
+satisfiability of conjunction of predicates. Use *explanation* from theory
+solver to modify formula.
 
-### Lazy SMT solving
-General Idea: find solutions for *boolean skeleton* of formulas and use *theory solver* to check
-satisfiability of conjunction of predicates.
+Less Lazy SMT Solving
+: also check satisfiability of partial assignments.
 
+Requirements for theory solver in Less Lazy SMT Solving:
+
+* (Preferably minimal) **infeasible subsets**: compute reason for unsatisfaction
+* **Incrementality**: possible to efficiently extend set of constraints
+* **Backtracking**: should be able to remove constraints in reverse chronological order
 
 ## Equality Logic with Uninterpreted Functions
 Problem:
@@ -625,7 +636,11 @@ How to make a graph cordal
 **Result**:
 Satisfiability equivalent formula of $\phi$ is $\phi_{sk} \land \phi_{trans}$
 
-### Bitvector Arithmetic (Bit-Blasting)
+### Lazy Approach
+
+## Bitvector Arithmetic (Bit-Blasting)
+
+**Eager Approach**:
 
 * Build propositional flattening
 * Add Boolean variable for each bit of each sub-expression
@@ -635,9 +650,77 @@ Satisfiability equivalent formula of $\phi$ is $\phi_{sk} \land \phi_{trans}$
 
 ## Fourier Motzkin
 
+Extension of Gauss.
+
+Checks satisfiability of a conjunction (theory solver) of *non-strict* inequalities.
+Or in other words given $A \in R^{m \times n}$ and $b \in R^m$
+is there an $x \in R^n$ such that:
+
+$$ Ax \leq b $$
+
+::: {.callout-note}
+Can be extendet to also handle strict inequalities.
+:::
+
+::: {.callout-tip}
+$=$ constraints can be substituted by two $\leq$ constraints.
+:::
+
+**Algorithm**:
+
+* While there is a free variable $x$:
+  * Bring $x$ to one hand side of each equation in which it appears
+  * Separate these into lower $L$ and upper $U$ bounds:
+  $$ \begin{array}{l|rcl} 
+  \text{lower bound:} & \text{lbound}  \leq & x & \\
+  \text{upper bound:} &                     & x & \leq \text{ubound}
+  \end{array} $$
+  * If $L = \emptyset$ or $U = \emptyset$ the variable is *unbounded* and we can
+    remove it and all constraints containing it!
+  * Otherwise we only need to check if $\text{lbound} \leq \text{ubound}$ for all
+    $\text{lbound} \in L, \text{ubound} \in U$.
+    * If they both don't contain free variables the evaluation is straightforeward.
+    * If they contain free variables we **symbolically** evaluate them by adding
+      the constraint to our set
+      
+**Runtime**:
+
+For $m$ constraints in $d$ variables we have a worst-case complexity of:
+$4 \cdot (\frac{m}{4})^{2^d}$
+
 ## Simplex
 
-## Branch and Bound
+Checks satisfiability of a conjunction (theory solver) of *non-strict* inequalities.
+Or in other words given $A \in \Q^{m \times n}$ and $b \in \Q^m$
+is there an $x \in \R^n$ such that:
+
+$$ Ax \leq b $$
+
+::: {#def-simplex-general-form}
+### General Form
+We can bring a simplex instance into general form by introducing **slack variables**
+$\vec{s} = (s_1,...,s_m)$ for each inequality.
+We then transform each inequality to an equality and a bound on its slack variable.
+The problem in **general form** is then given by:
+
+$$ 
+A' \cdot \left( \begin{array}{c} \vec{x} \\ \vec{s} \end{array}\right) = 0
+\text{ and } \bigwedge_{1 \leq i \leq m} l_i \leq s_i \leq u_i
+$$
+:::
+
+## Branch&Bound
+
+Is a modification Simplex that deals with *integer linear programms* (ILP).
+ILP's are generally undecidable. "Branch and Bound" is incomplete.
+
+* Calculate solution for "relaxed system" (i.e. find solution in $\R$)
+* if none exists return unsat ("bound")
+* if solution is in $\N$ return it
+* if solution $\vec{x}$ has non integer component $i$:
+  two recursive calls ("branch"):
+  * one with additional constraint $x_i \leq \lfloor \vec{x}_i \rfloor$
+  * one with additional constraint $\lceil \vec{x}_i \rceil \leq x_i$
 
 ## Non-Linear Arithmatik
 
