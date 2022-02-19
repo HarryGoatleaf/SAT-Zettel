@@ -11,9 +11,17 @@ format:
     monofont: "Fira Code"
 ---
 
+<!-- Numbers -->
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\Q}{\mathbb{Q}}
 \newcommand{\N}{\mathbb{N}}
+<!-- Intervals -->
+\newcommand{\I}{\mathbb{I}}
+\newcommand{\lA}{\underline{A}}
+\newcommand{\uA}{\overline{A}}
+\newcommand{\lB}{\underline{B}}
+\newcommand{\uB}{\overline{B}}
+<!-- Formulas -->
 \newcommand{\nxs}{x_1,...,x_n}
 \newcommand{\phi}{\varphi}
 
@@ -724,6 +732,114 @@ ILP's are generally undecidable. "Branch and Bound" is incomplete.
 
 ## Non-Linear Arithmatik
 
+## Interval Constraint Propagation
+
+:::{#def-interval}
+### Interval
+\
+An **interval** $A = [ \lA; \uA]$
+where 
+
+* *lower bound* $\lA \in \R \cup \{-\infty\}$
+* *upper bound* $\uA \in \R \cup \{+\infty\}$
+
+denotes the closed set 
+$$[\![A]\!] = \{v \in \R \ \vert \ \lA \leq v \leq \uA \}$$
+
+and is *unbounded* iff ($\lA = - \infty$ or $\uA = + \infty$) and *bounded* otherwise.
+
+Its *width/diameter* is $\infty$ iff it is unbounded and $\uA - \lA$ otherwise.
+
+We denote the set of all such intervals with $\I$ and the diameter function with $D$.
+
+We call a cross product of n interval an **n-dimensional box**.
+
+We present $\emptyset$ by $[1; 0]$
+:::
+
+:::{#def-interval-arithmetic}
+### Interval arithmetic
+\
+We extend $+, -, \cdot, \div, \cdot^2, \pm \sqrt{\cdot}$ to intervals in the following way
+
+$$ \text{ op } A = \{ \text{ op } a \ \vert \ a \in [\![A]\!]\}$$
+$$ A \text{ op } B = \{ a \text{ op } b \ \vert \ a \in [\![A]\!] , b \in [\![B]\!] \}$$
+:::
+
+This means that:
+
+* $A \text{ op } B = [1;0]$ iff. $A = \emptyset \lor B = \emptyset$ and otherwise
+* $A + B = [\lA + \lB ; \uA + \uB ]$
+* $A - B = [\lA - \uB ; \uA - \lB ]$
+* $A \cdot B = [\min C ; \max C]$ where 
+  $C = \{\lA \cdot \lB, \lA \cdot \uB, \uA \cdot \lB, \uA \cdot \uB \}$
+* $A^2 = (A \cdot A) \cap [0;+\infty]$
+* $\pm \sqrt{A} = \begin{cases}
+      [- \sqrt{\uA}; + \sqrt{\uA}]                                & \text{if } 0 \in A \\
+      [- \sqrt{\uA}; - \sqrt{\lA}] \cup [\sqrt{\lA} ; \sqrt{\uA}] & \text{if } 0 < \lA \\
+      [1;0]                                                       & \text{otherwise}
+    \end{cases}$
+* $A \div B = \begin{cases}
+    [\min C; \max C] 
+    & \text{if } 0 \notin B \\
+    [- \infty; + \infty] 
+    & \text{if } 0 \in A \land 0 \in B \\
+    [1;0] 
+    & \text{if } 0 \notin A \land B = [0;0] \\
+    [\min (C \cap R^+); + \infty] 
+    & \text{if } 0 \notin A \land 0 \in B \land 
+      \exists_{a \in A, b \in B}.(\text{sgn}(a) = \text{sgn}(b))\\
+    [- \infty; \max (C \cap R^-] 
+    & \text{if } 0 \notin A \land 0 \in B \land
+      \exists_{a \in A, b \in B}.(\text{sgn}(a) \neq \text{sgn}(b))\\
+  \end{cases}$
+  where
+  $C = \{\frac{\lA}{\lB}, \frac{\lA}{\uB}, \frac{\uA}{\lB}, \frac{\uA}{\uB}\}$
+
+General Idea of ICP
+: Take a set of `QFNRA` constraints and an initial box $B$.
+  Iteratively contract $B$ without removing solutions.
+
+### Contraction Method 1
+
+For this method we require that we can bring every variable to one hand side in every constraint.
+This is possible for linear-polynomials and monomials.
+We make a preprocessing step to eliminate non-linear polynomials.
+
+**Preprocessing**:
+
+* Bring every constraint to the form $p \sim 0$
+* We replace every non-linear monomial $m_i$ in all polynomials by a fresh variable $h_i$
+* We add $h_i - m_i = 0$ to $C$
+* We initialize the bounds for $h_i$ by evaluating $m_i$ and substituting initial box
+
+**Contraction**:
+
+* Choose a constraint $c$ and variable $x$. We will call $(c, x)$ the **contraction candidate** (CC) 
+* Bring $x$ to one hand side
+* Substitute current bounds to obtain *union of intervals* $B_1,...,B_k$
+<!-- this makes no sense -->
+* For each $1 \leq i \leq k$:
+  * restrict current bounds of $x$ to values that do not conflict with $B_i$
+
+### Contraction Method 2 (Interval Newton Method)
+
+::: {.callout-note}
+In this lecture only univariate case.
+:::
+
+**Preprocessing**:
+
+* Bring every constraint to the form $p \sim 0$
+* Introduce fresh *slack variable* $h$ for each inequation $p \sim 0$ and bring to the form
+  $h - p = 0$ and $h \sim 0$ where the bounds from $h$ are obtained by substituting the initial bounds
+  in $p$ and from $h \sim 0$.
+
+**Contraction**:
+
+* Take constraint $f(x) = 0$ with starting bounds $A$ and sample point $s \in A$.
+* Set new interval to $$A := A \cap \left(s - \frac{f(s)}{f'(s)} \right)$$
+
 ## Decomposition
 Idea
 : Concept to decompose infinite variable domain into finitely many,
@@ -734,7 +850,7 @@ Algebra definitions:
 * **Degree**:
   * Degree of monomial is sum of exponents.
   * Degree of polynomial is max degree of monomials in canonical form.
-* **(real/complex) Root**: $\vec{x} \in (\mathbb{R} / \mathbb{C})$ such that $p(\vec{x}) = 0$
+* **(real/complex) Root**: $\vec{x} \in \mathbb{R} \text{ resp. } \mathbb{C}$ such that $p(\vec{x}) = 0$
 * **Finite abstraction**: finite set of points that contains one point from each sign invariant
     region from $p$
 
