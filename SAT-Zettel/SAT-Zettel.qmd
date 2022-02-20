@@ -24,6 +24,7 @@ format:
 <!-- Formulas -->
 \newcommand{\nxs}{x_1,...,x_n}
 \newcommand{\phi}{\varphi}
+\newcommand{\FO}{\text{FO}}
 
 ## SAT
 
@@ -492,10 +493,38 @@ Requirements for theory solver in Less Lazy SMT Solving:
 * **Backtracking**: should be able to remove constraints in reverse chronological order
 
 ## Equality Logic with Uninterpreted Functions
-Problem:
-Given a quantifier free FO formula over some functional signature $\phi$ in NNF,
-can we find a structure $\mathfrak{A}$ and values for the variables $\alpha$ such that
-$$ \mathfrak{A}, \alpha \models \phi$$
+
+::: {#def-wq+uf}
+### Equality Logic with Uninterpreted Functions
+
+The signature $\Sigma$ contains:
+
+* variables $x$
+* constants $c$
+* function symbols $F$
+* equality as a predicate
+
+Terms
+: $t := c \ | \ c \ | \ x \ | \ F(t,...,t)$
+
+Formulas
+: $\phi := (t=t) \ | \ (\phi \land \phi) \ | \ (\neg \phi)$
+<!--
+\begin{tabular}{ccccccc}
+Term: $t$       & $=$ & $c$     & | & $x$               & | & $F(t,...,t)$ \\
+Formula: $\phi$ & $=$ & $(t=t)$ & | & $(\phi \land \phi)$ & | & $(\neg \phi)$
+\end{tabular}
+| Terms:    | $t$    | $=$ | $c$   | $x$               | $F(t,...,t)$  |
+|:---------:|:------:|:---:|:-----:|:-----------------:|:-------------:|
+| Terms:    | $t$    | $=$ | $c$   | $x$               | $F(t,...,t)$  |
+| Formulas: | $\phi$ | $=$ | $(t=t)$ | $(\phi \land \phi)$ | $(\neg \phi)$ |
+-->
+
+Problem
+: Given a *quantifier free* $\phi \in \FO (\Sigma)$ in NNF,
+  can we find a structure $\mathfrak{A}$ and values for the variables $\alpha$ such that
+  $$ \mathfrak{A}, \alpha \models \phi$$
+:::
 
 <!-- TODO: sehr freie def. vllt bezug zum VL formalismus herstellen -->
 <!-- TODO: evtl motivation -->
@@ -547,7 +576,6 @@ A cycle is
 
 * *contradictory* iff. it contains exactly one edge from $E_\neq$
 * *simple* iff. it does not visit nodes twice
-* *chord-free* iff. we can't replace multiple consecutive edges by one edge
 :::
 
 :::{.callout-note}
@@ -618,15 +646,16 @@ Idea
 : Add edges until the graph is composed only of (polynomially many) triangles.
   Then it suffices to require transitivity of every triangle.
 
-::: {#def-chordal name="Chordal Graph"}
-A graph is chordal iff. every simple cycle over at least 4 different nodes is chordal.
+::: {#def-chordal}
+##### Chordal
+A cycle is *chord-free* iff. we can't replace multiple consecutive edges by one edge.
 
-.
+A graph is chordal iff. every simple cycle over at least 4 different nodes is chordal.
 :::
 
 How to make a graph cordal
 : For every simple chord-free cycle over more than 4 nodes.
-  Take any nodes and connect it directly to all other nodes on cycle.
+  Take any node and connect it directly to all other nodes on cycle.
 
 **Algorithm**:
 
@@ -797,8 +826,10 @@ This means that:
   $C = \{\frac{\lA}{\lB}, \frac{\lA}{\uB}, \frac{\uA}{\lB}, \frac{\uA}{\uB}\}$
 
 General Idea of ICP
-: Take a set of `QFNRA` constraints and an initial box $B$.
-  Iteratively contract $B$ without removing solutions.
+: Take a set of `QFNRA` constraints and an initial set of boxes $B$.
+  Iteratively contract boxes from $B$ without removing solutions from $B$.
+  Split boxes with heuristic.
+  Once a box' diameter is "sufficiently small" check with a complete procedure if it contains a solution.
 
 ### Contraction Method 1
 
