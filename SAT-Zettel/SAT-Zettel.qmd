@@ -25,6 +25,8 @@ format:
 \newcommand{\nxs}{x_1,...,x_n}
 \newcommand{\phi}{\varphi}
 \newcommand{\FO}{\text{FO}}
+<!-- Virtual Substitution -->
+\newcommand{\vs}{/ \! \! /}
 
 ## SAT
 
@@ -494,7 +496,7 @@ Requirements for theory solver in Less Lazy SMT Solving:
 
 ## Equality Logic with Uninterpreted Functions
 
-::: {#def-wq+uf}
+::: {#def-wquf}
 ### Equality Logic with Uninterpreted Functions
 
 The signature $\Sigma$ contains:
@@ -519,12 +521,12 @@ Formula: $\phi$ & $=$ & $(t=t)$ & | & $(\phi \land \phi)$ & | & $(\neg \phi)$
 | Terms:    | $t$    | $=$ | $c$   | $x$               | $F(t,...,t)$  |
 | Formulas: | $\phi$ | $=$ | $(t=t)$ | $(\phi \land \phi)$ | $(\neg \phi)$ |
 -->
+:::
 
 Problem
 : Given a *quantifier free* $\phi \in \FO (\Sigma)$ in NNF,
   can we find a structure $\mathfrak{A}$ and values for the variables $\alpha$ such that
   $$ \mathfrak{A}, \alpha \models \phi$$
-:::
 
 <!-- TODO: sehr freie def. vllt bezug zum VL formalismus herstellen -->
 <!-- TODO: evtl motivation -->
@@ -675,13 +677,52 @@ Satisfiability equivalent formula of $\phi$ is $\phi_{sk} \land \phi_{trans}$
 
 ### Lazy Approach
 
-## Bitvector Arithmetic (Bit-Blasting)
+## Bitvector Arithmetic
 
-**Eager Approach**:
+Quantifier-free finite-precision bit-vector arithmetic `QF BV`.
+This theory is **undecidable** for unbounded bitvector length
+and **NP-complete** for bounded length.
 
-* Build propositional flattening
-* Add Boolean variable for each bit of each sub-expression
-* Add constraints for each sub-expression
+::: {#def-bitvector-arithmetic}
+### Bitvector Arithmetic
+
+The signature $\Sigma$ and the semantics given by the theory of bitvector arithmetic:
+
+* Universe: **bitvectors**\
+  A bitvector $x_{[l]}$ is a function
+  $$ x : \{0,...,l-1\} \rightarrow \{0, 1\} $$
+  where $x_{l-1}$ is the **most significant bit**
+* Relations:
+  * $=, <$: *binary* comparison relations
+  * $[constant]$: where $x[i]$ holds iff the i-th bit of $x$ is 1 (unary)
+* Functions:
+  * $+, -, \cdot, /$: the usual (binary) arithmatik operations
+  * $\ll, \gg$: (binary) bitshift operations
+  * $\&, \vert, \oplus$: (binary) bitwise and, or, xor
+  * $\sim$: (unary) bitwise not
+  * $ext$: sign or zero extension
+  * $\circ$: (binary) concatenation $x_{[2]} \circ y_{[1]} = x_1x_0y_0$
+  * $[constant1:constant2]$: bitvector slice from $constant1$ to $constant2$
+  * $\phi?t_1:t_2$ syntactic sugar that equals $t_1$ iff $\phi$ holds and otherwise $t_2$
+:::
+
+The common encoding for numbers in bitvectors:
+
+Unsigned
+: $\langle x_{[l]} \rangle_U := \Sigma_{i=0}^{l-1} x_i \cdot 2^i$
+
+Two's complement
+: $\langle x_{[l]} \rangle_S := -2^{l-1} \cdot x_{l-1} + \Sigma_{i=0}^{l-2} x_i \cdot 2^i$
+
+
+### Bit-Blasting
+
+Is an *eager* SMT-solving approach that transforms a formula from `QF BV` into
+an equisatisfiable formula from `PropForm`.
+
+1. Build propositional flattening
+2. Add Boolean variable for each bit of each term
+3. Add constraints to define the meaning of each sub-expression
 
 ## Linear Arithmatik
 
@@ -902,10 +943,11 @@ by pluging in all *sample points* from the abstraction and evaluating the formul
 ### At a glance
 * incomplete
 * in practice very fast
-* theory solver, i.e. does not solve boolean sceleton, only conjunction of constraints.
-  In this lecture: only one constraint!
-* used for SAT checking on quantifier free fragment of $FO$ on $(R, +, \cdot)$ 
-  also called *quantifier free non-linear real arithmatic* (QFNRA).
+* theory solver for `QFNRA`
+  
+::: {.callout-important}
+Only for one constraint in this lecture!
+:::
 
 ### Algebra concepts
 * **Monomial**: product of variables
@@ -916,7 +958,17 @@ by pluging in all *sample points* from the abstraction and evaluating the formul
   * $f := x^1y^1 + x + 1$ 
   * $p(f) = \{ (1,1), (1, 0), (0, 0) \}$
 * **Newton Polytope**: inclusion minimal convex hull of frame of poly
-* **Hyperplane**: can be defined by linear equation
+* **Hyperplane**: all points $\vec{v} \in \R^n$ that satisfy some *linear equation*
+  $$n_1v_1 + ... + n_n v_n  + b = 0$$
+  its **normal vector** is $\vec{n} = (v_1,...,v_n)$ and we can reformulate the equation to
+  $$ \vec{n} \cdot \vec{v}^t = b $$
+  A hyperplane naturally splits the space in two half-spaces: 
+  * one "below" the plane $\{ \vec{v} \in \R^n | \vec{n} \cdot \vec{v}^t < b \}$
+  * one "above" the plane $\{ \vec{v} \in \R^n | \vec{n} \cdot \vec{v}^t > b \}$
+* **Face**: A non empty intersection between a hyperplane that is not below any point 
+  from the polytope is called a face of the polytope and can be defined by the normal 
+  vector of the hyperplane. Formally for $\vec{n} \in \R^n$ and a Newton Polytope $P$:
+  $$ \{ \vec{v} \in P | \forall \vec{u} \in \R^n.(\vec{n} \vec{v}^t \geq \vec{n} \vec{u}^t\}$$
 
 ### Notation
 * **polynomial ring**: $D[\nxs]$ is the ring of all polynomials with variables
@@ -945,18 +997,25 @@ We set $\vec{a} = (1,...,1)$.
 For this part we hope that the polynome diverges in any direction to $+\infty$.
 If it does we walk into this direction until we find $\vec{b}$.
 
-**Case: Univariate**\
-Just check leading coefficient to find out if poly diverges towards $\pm \infty$.
-
-**Case: Multivariate**\
 Search for term with positive coeff that can get dominating.
 Search for direction in which this term gets dominating.
 
 **Algorithm**:
-Find Hyperplane that separates node of Newton Polytope with positive
-leading coefficient from the rest of the polytope.
-Normalvector of Hyperplane is direction in which the poly diverges.
+Find Hyperplane that separates frame point of Newton Polytope with positive
+leading coefficient from the other frame points.
+
 Use linear programming to find such hyperplane.
+Let $n_1,...,n_n, b$ be variables, then we can solve
+the linear program:
+$$ n v^t > b \land \bigwedge_ {\begin{array}{c}u \in frame(p) \\ u \neq v\end{array}}
+n u^t < b$$
+
+To find the normal vector  $\vec{n}$ of such a hyperplane.
+We then know that
+$$\lim_{a \rightarrow \infty} p(a^{n_1},...,a^{n_n}) > 0$$
+and by starting with
+$\vec{a} = (2,...,2)$ and doubling $\vec{a}$ until we find a suitable
+value.
 
 #### Part 3
 **Problem**: given $\vec{a}$ and $\vec{b}$ such that
@@ -972,6 +1031,38 @@ $\vec{a}$ and $\vec{b}$.
 
 * Because $p \circ s$ is univariate we can find such a $t$ with common techniques (e.g. bisection)
 * Root of $p$ is then given by $s(t)$.
+
+## Virtual Substitution
+
+### At a Glance
+* eager SMT solver, i.e. also solves boolean structure
+* generates SAT-equivalent formula *without variables*
+* uses solution formulas for univariate case that exist for up to deg 4.
+  In this lecture only up to deg 2 (i.e. p-q-Formel).
+* can be extended to $\forall$-quantifier
+* generated formula's size increases exponentially with number of quantifiers
+
+* interpret multivariat as univariat over poly-ring
+* generates finite abstraction
+
+### An intuition about virtual substitution
+**Recap**: With $\phi[t / x]$ we denote the explicit substitution.
+By this we mean that we *syntactically* replace every occurence of
+$x$ in $\phi$ by $t$.
+
+**Example**: $(x=1) [0 / x] \rightsquigarrow (0=1)$
+
+**Def**: With $\phi[t \vs x]$ we denote the virtual substitution.
+By this we mean that we *semantically* replace every occurence of
+$x$ in $\phi$ by $t$.
+We do this if we cannot explicitly substitute $x$ with $t$ because
+$t$ is not a valid term in our current theory (e.g. contains square-roots).
+ by constructing a formula $\phi'$ such that
+$\phi' \equiv \phi[t / x]$.
+
+### Find symbolic candidates and their side conditions
+
+### Substituting
 
 
 ## Cylindrical Algebraic decomposition
