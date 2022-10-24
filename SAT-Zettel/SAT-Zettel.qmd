@@ -507,20 +507,10 @@ The signature $\Sigma$ contains:
 * equality as a predicate
 
 Terms
-: $t := c \ | \ c \ | \ x \ | \ F(t,...,t)$
+: $t := c \ | \ x \ | \ F(t,...,t)$
 
 Formulas
 : $\phi := (t=t) \ | \ (\phi \land \phi) \ | \ (\neg \phi)$
-<!--
-\begin{tabular}{ccccccc}
-Term: $t$       & $=$ & $c$     & | & $x$               & | & $F(t,...,t)$ \\
-Formula: $\phi$ & $=$ & $(t=t)$ & | & $(\phi \land \phi)$ & | & $(\neg \phi)$
-\end{tabular}
-| Terms:    | $t$    | $=$ | $c$   | $x$               | $F(t,...,t)$  |
-|:---------:|:------:|:---:|:-----:|:-----------------:|:-------------:|
-| Terms:    | $t$    | $=$ | $c$   | $x$               | $F(t,...,t)$  |
-| Formulas: | $\phi$ | $=$ | $(t=t)$ | $(\phi \land \phi)$ | $(\neg \phi)$ |
--->
 :::
 
 Problem
@@ -691,7 +681,9 @@ The signature $\Sigma$ and the semantics given by the theory of bitvector arithm
 * Universe: **bitvectors**\
   A bitvector $x_{[l]}$ is a function
   $$ x : \{0,...,l-1\} \rightarrow \{0, 1\} $$
-  where $x_{l-1}$ is the **most significant bit**
+  where $x_{l-1}$ is the **most significant bit**.
+  We can present it by the word
+  $$ x_{l-1} \dots x_0 $$
 * Relations:
   * $=, <$: *binary* comparison relations
   * $[constant]$: where $x[i]$ holds iff the i-th bit of $x$ is 1 (unary)
